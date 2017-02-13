@@ -1,0 +1,33 @@
+{
+  "name": "d3-rs-globe-tiles",
+  "version": "0.0.1",
+  "description": "Tile generator for d3-rs-globe",
+  "main": "src/Grid.js",
+  "bin": {
+    "buildgrid": "bin/buildgrid"
+  },
+  "scripts": {
+    "build": "mkdir -p tiles && bin/buildgrid -r 500 -o tiles/grid.js resources/equirectangle_projection.png",
+    "pretest": "npm outdated || true && npm run build",
+    "test": "tape 'test/**/*-test.js'",
+    "posttest": "eslint index.js src",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/redsift/d3-rs-globe-tiles.git"
+  },
+  "engines": {
+      "node": ">= 6.0.0"
+  },  
+  "author": "rahul@redsift.io",
+  "license": "MIT",
+  "dependencies": {
+    "minimist": "*",
+    "hexasphere.js": "*",
+    "pngjs": "~3.0.0"
+  },
+  "devDependencies": {
+    "tape": "*"
+  }
+}

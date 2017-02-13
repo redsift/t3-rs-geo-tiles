@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+'use strict'
+
+const argv = require('minimist')(process.argv.slice(2), { alias: { 'help': 'h' }, boolean: [ 't', 'h' ] }),
+    fs = require('fs'),
+    path = require('path'),
+    grid = require('../');
+
+let cmdError = argv._.length == 0;
+
+if (argv.h || cmdError) {
+    if (cmdError) {
+        console.error('MAP file must be supplied');
+    }
+    console.log(`buildgrid: Create hex tiles for mapping
+
+    buildgrid [OPTIONS] MAP.png
+
+    MAP \t PNG file to process. Black pixels indicate mass of interest
+
+Options:
+    -t \t Use the smaller array packed version
+    -r RADIUS \t Radius used to calculate position of tiles
+    -d DIVISIONS \t Divide each edge of the icosohedron into this many segments
+    -w WIDTH \t Add padding (1.0 = no padding; 0.1 = mostly padding)
+    -o FILE \t Output file, .json or ES6 .js depending on file ext. Defaults to STDOUT
+    `);
+
+    process.exit(cmdError ? 1 : 0);
+}
+
+const options = {
+    radius: argv.r ? parseInt(argv.r) : null,
+    divisions: argv.d ? parseInt(argv.d) : null,
+    width: argv.w ? parseFloat(argv.w) : null,    
+    tiny: argv.t === true, 
+}
+
+for (let map of argv._) {
+    grid(map, options)
+    .then(j => {
+            if (argv.o) {
+                if (path.extname(argv.o).toLowerCase() === '.js') {
+                    j = `export const tiles = ${j};`;
+                }
+                fs.writeFile(argv.o, j);
+            } else {
+                console.log(j);
+            }
+    })
+    .catch(e => {
+        console.error(e);
+        process.exit(2);
+    });
+
+}

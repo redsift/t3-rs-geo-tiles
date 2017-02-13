@@ -1,0 +1,26 @@
+
+machine:
+  node:
+    version: 6.3.1
+  environment:
+    NAME: d3-rs-globe-tiles
+
+checkout:
+  pre:
+    - npm install -g npm
+ 
+dependencies:
+  override:
+    - npm install
+
+test:
+  override:
+    - npm test
+
+deployment:
+  production:
+    branch: /release-.*/
+    commands:
+      - echo "Publishing to NPM"
+      - echo -e "$NPM_USERNAME\n$NPM_PASSWORD\n$NPM_EMAIL" | npm login
+      - npm publish --access=public
