@@ -25,6 +25,64 @@ function compress(t) {
     return t;
 }
 
+// original coverage implementation, samples points at the location of the hex grid
+function computeCoverForTiles_sample(png, tiles, radius) {
+    let count = 0;
+    for (let j = 0; j< tiles.boundary.length; j++) {
+        let latLon = tiles.getLatLon(radius, j);
+        let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+        let idx = xyToIdx(xy.x, xy.y, png.width);
+        count += 255 - png.data[idx];
+    }
+
+    let latLon = tiles.getLatLon(radius); // sample center point
+    let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+    let idx = xyToIdx(xy.x, xy.y, png.width);
+    count += 255 - png.data[idx];
+    
+    return (count / (tiles.boundary.length + 1)) / 255;
+}
+
+// new implementation, count the pixels in the bounding box
+function computeCoverForTiles_box(png, tiles, radius) {
+    let minx = png.width + 1,
+        miny = png.height + 1,
+        maxx = 0,
+        maxy = 0;
+        
+    for (let j = 0; j < tiles.boundary.length; j++) {
+        let latLon = tiles.getLatLon(radius, j);
+        let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+
+        if (xy.x < minx) minx = xy.x;
+        if (xy.y < miny) miny = xy.y;
+        
+        if (xy.x > maxx) maxx = xy.x;
+        if (xy.y > maxy) maxy = xy.y;
+    }
+
+    if (maxx > png.width) maxx = png.width;
+    if (maxy > png.height) maxy = png.height;    
+
+    const w = (maxx - minx);
+    const h = (maxy - miny);
+    
+    const dst = new PNG({width: w, height: h});
+    png.bitblt(dst, minx, miny, w, h, 0, 0);
+
+    let count = 0;
+    for (let i = 0; i < dst.data.length; i++) {
+        count += 255 - dst.data[i];
+    }
+    if (minx < 5) {
+        console.log(minx, miny, count, dst.data.length);   
+
+        dst.pack().pipe(fs.createWriteStream(`${minx}_${miny}.png`));
+    }
+
+    return count / (dst.data.length * 255);
+}
+
 function createGrid(map, p) {
     p = p || {};
     let radius = p.radius || 500;
@@ -32,7 +90,9 @@ function createGrid(map, p) {
     let width = p.width || .45; 
     let tiny = p.tiny != null ? p.tiny : false;
     let threshold = p.threshold || 0.1;
+    let box = p.box != null ? p.box : true;
     let dfile = '_debug.png'; // TEMP
+
 
     const hexasphere = new Hexasphere(radius, divisions, width);
 
@@ -51,29 +111,11 @@ function createGrid(map, p) {
             const debugBuffer = Buffer.alloc(this.data.length, 255);
 
             for (let i = 0; i< hexasphere.tiles.length; i++) {
-                let count = 0;
-                for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++) {
-                    let latLon = hexasphere.tiles[i].getLatLon(radius, j);
-                    let xy = latLonToXY(this.width, this.height, latLon.lat, latLon.lon);
-                    let idx = xyToIdx(xy.x, xy.y, this.width);
-                    count += 255 - this.data[idx];
+                let latLon = hexasphere.tiles[i].getLatLon(radius);
+                let size = box ? computeCoverForTiles_box(this, hexasphere.tiles[i], radius) : computeCoverForTiles_sample(this, hexasphere.tiles[i], radius);
 
-                    debugBuffer[idx] = 0;
-                    debugBuffer[idx+1] = 0;
-                    debugBuffer[idx+2] = 0;
-                }
-
-                let latLon = hexasphere.tiles[i].getLatLon(radius); // sample center point
-                let xy = latLonToXY(this.width, this.height, latLon.lat, latLon.lon);
-                let idx = xyToIdx(xy.x, xy.y, this.width);
-                count += 255 - this.data[idx];
-                
-                debugBuffer[idx] = 0;
-                debugBuffer[idx+1] = 0;
-
-                let size = (count / (hexasphere.tiles[i].boundary.length + 1)) / 255;
-
-                if (size > threshold) {
+                // threshold < 0 is basically a ignore value
+                if (size > threshold || threshold < 0) {
                     let tile = {lat: rnd(latLon.lat), lon: rnd(latLon.lon), b: [] };
                     let scale = size - Math.random() * .25;
 
