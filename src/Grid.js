@@ -4,7 +4,7 @@ const PNG = require('pngjs').PNG,
     fs = require('fs'),
     Hexasphere = require('hexasphere.js');
 
-function latLonToXY(width, height, lat,lon){
+function latLonToXY(width, height, lat, lon) {
 
     const x = Math.floor(width/2.0 + (width/360.0)*lon);
     const y = Math.floor((height/2.0 + (height/180.0)*lat));
@@ -12,11 +12,11 @@ function latLonToXY(width, height, lat,lon){
     return {x: x, y: y};
 }
 
-function xyToIdx(x,y, width){
+function xyToIdx(x, y, width) {
     return (width * y + x) << 2;
 }
 
-function rnd(num){
+function rnd(num) {
     return Math.round(num * 100) / 100;
 }
 
@@ -31,7 +31,8 @@ function createGrid(map, p) {
     let divisions = p.divisions || 35;
     let width = p.width || .45; 
     let tiny = p.tiny != null ? p.tiny : false;
-
+    let threshold = p.threshold || 0.1;
+    let dfile = '_debug.png'; // TEMP
 
     const hexasphere = new Hexasphere(radius, divisions, width);
 
@@ -47,27 +48,36 @@ function createGrid(map, p) {
             filterType: 4
         }))
         .on('parsed', function() {
-            for (let i = 0; i< hexasphere.tiles.length; i++){
+            const debugBuffer = Buffer.alloc(this.data.length, 255);
+
+            for (let i = 0; i< hexasphere.tiles.length; i++) {
                 let count = 0;
-                for(let j = 0; j< hexasphere.tiles[i].boundary.length; j++){
-                    let latLon = hexasphere.tiles[i].getLatLon(radius,j);
+                for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++) {
+                    let latLon = hexasphere.tiles[i].getLatLon(radius, j);
                     let xy = latLonToXY(this.width, this.height, latLon.lat, latLon.lon);
                     let idx = xyToIdx(xy.x, xy.y, this.width);
                     count += 255 - this.data[idx];
+
+                    debugBuffer[idx] = 0;
+                    debugBuffer[idx+1] = 0;
+                    debugBuffer[idx+2] = 0;
                 }
 
-                let latLon = hexasphere.tiles[i].getLatLon(radius);
+                let latLon = hexasphere.tiles[i].getLatLon(radius); // sample center point
                 let xy = latLonToXY(this.width, this.height, latLon.lat, latLon.lon);
                 let idx = xyToIdx(xy.x, xy.y, this.width);
                 count += 255 - this.data[idx];
+                
+                debugBuffer[idx] = 0;
+                debugBuffer[idx+1] = 0;
 
-                let size = (count/(hexasphere.tiles[i].boundary.length + 1))/255;
+                let size = (count / (hexasphere.tiles[i].boundary.length + 1)) / 255;
 
-                if (size > .1){
+                if (size > threshold) {
                     let tile = {lat: rnd(latLon.lat), lon: rnd(latLon.lon), b: [] };
                     let scale = size - Math.random() * .25;
 
-                    for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++){
+                    for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++) {
                         let newPoint = hexasphere.tiles[i].boundary[j].segment(hexasphere.tiles[i].centerPoint, size);
                         tile.b.push({
                             x: rnd(newPoint.x),
@@ -84,6 +94,16 @@ function createGrid(map, p) {
                 json = JSON.stringify(o);
             } else {
                 json = JSON.stringify(o, null, 4);
+            }
+            
+            if (dfile) {
+                const debug = new PNG({ width: this.width, height: this.height, colorType: 2 });
+                debug.data = debugBuffer;
+                debug.pack()
+                    .pipe(fs.createWriteStream(dfile))
+                    .on('finish', function() {
+                        console.log(`debug PNG file ${dfile} written`);
+                    });
             }
 
             ok(json);

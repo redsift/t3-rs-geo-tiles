@@ -22,9 +22,10 @@ if (argv.h || cmdError) {
 Options:
     -t \t Use the smaller array packed version
     -r RADIUS \t Radius used to calculate position of tiles
-    -d DIVISIONS \t Divide each edge of the icosohedron into this many segments
+    -d DIVISIONS \t Divide each edge of the icosohedron into this many segments (5 = low level of detail, 35 - medium, >50 - high)
     -w WIDTH \t Add padding (1.0 = no padding; 0.1 = mostly padding)
     -o FILE \t Output file, .json or ES6 .js depending on file ext. Defaults to STDOUT
+    -e THRESHOLD \t Detail threshold to emit hex tile for (1.0 = ignore everything, 0.1 = capture small detail) 
     `);
 
     process.exit(cmdError ? 1 : 0);
@@ -34,6 +35,7 @@ const options = {
     radius: argv.r ? parseInt(argv.r) : null,
     divisions: argv.d ? parseInt(argv.d) : null,
     width: argv.w ? parseFloat(argv.w) : null,    
+    threshold: argv.e ? parseFloat(argv.e) : null,   
     tiny: argv.t === true, 
 }
 
@@ -44,7 +46,10 @@ for (let map of argv._) {
                 if (path.extname(argv.o).toLowerCase() === '.js') {
                     j = `export const tiles = ${j};`;
                 }
-                fs.writeFile(argv.o, j);
+                const file = argv.o;
+                fs.writeFile(file, j);
+                const stat = fs.statSync(file);
+                console.log(`Wrote ${file} grid, ${(stat.size / 1024).toFixed(2)} Kb`);
             } else {
                 console.log(j);
             }
