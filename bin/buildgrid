@@ -26,6 +26,7 @@ Options:
     -w WIDTH \t Add padding (1.0 = no padding; 0.1 = mostly padding)
     -o FILE \t Output file, .json or ES6 .js depending on file ext. Defaults to STDOUT
     -e THRESHOLD \t Detail threshold to emit hex tile for (1.0 = ignore everything, 0.1 = capture small detail) 
+    -v FILE \t JSON file to use for overlaying value field
     `);
 
     process.exit(cmdError ? 1 : 0);
@@ -37,6 +38,7 @@ const options = {
     width: argv.w ? parseFloat(argv.w) : null,    
     threshold: argv.e ? parseFloat(argv.e) : null,   
     tiny: argv.t === true, 
+    value: argv.v ? require(path.resolve(argv.v)) : null   
 }
 
 for (let map of argv._) {
@@ -47,7 +49,7 @@ for (let map of argv._) {
                     j = `export const tiles = ${j};`;
                 }
                 const file = argv.o;
-                fs.writeFile(file, j);
+                fs.writeFileSync(file, j);
                 const stat = fs.statSync(file);
                 console.log(`Wrote ${file} grid, ${(stat.size / 1024).toFixed(2)} Kb`);
             } else {

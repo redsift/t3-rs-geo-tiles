@@ -1,0 +1,54 @@
+{
+    "projection": "miller",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/67/World_population_density_1994.png",
+    "crop": {
+        "x1": 90,
+        "y1": 89,
+        "x2": 6606,
+        "y2": 3888
+    },
+    "scale": [
+        { 
+            "value": 0.0,
+            "color": [ 0, 0, 0 ]
+        }, 
+        { 
+            "value": 0.0,
+            "color": [ 255, 255, 255 ]
+        },
+        { 
+            "#": "shape boundaries",
+            "value": 0.0,
+            "color": [ 0, 255, 255 ]
+        },
+        {
+            "#": "rivers", 
+            "value": 0.0,
+            "color": [ 0, 0, 255 ]
+        },
+        { 
+            "value": 0.002,
+            "color": [ 232, 232, 232 ]
+        },    
+        { 
+            "value": 0.01,
+            "color": [ 168, 255, 168 ]
+        },    
+        { 
+            "value": 0.04,
+            "color": [ 255, 115, 0 ]
+        },    
+        { 
+            "value": 0.1,
+            "color": [ 255, 0, 0 ]
+        },    
+        { 
+            "value": 0.5,
+            "color": [ 204, 0, 0 ]
+        },    
+        { 
+            "value": 1.0,
+            "color": [ 255, 0, 255 ]
+        }
+    ]    
+}
