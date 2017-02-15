@@ -27,6 +27,7 @@ Options:
     -o FILE \t Output file, .json or ES6 .js depending on file ext. Defaults to STDOUT
     -e THRESHOLD \t Detail threshold to emit hex tile for (1.0 = ignore everything, 0.1 = capture small detail) 
     -v FILE \t JSON file to use for overlaying value field
+    -c WIDTH \t Ocean tile padding (1.0 = no padding; 0.1 = mostly padding; 0.0 = no ocean tiles)
     `);
 
     process.exit(cmdError ? 1 : 0);
@@ -36,6 +37,7 @@ const options = {
     radius: argv.r ? parseInt(argv.r) : null,
     divisions: argv.d ? parseInt(argv.d) : null,
     width: argv.w ? parseFloat(argv.w) : null,    
+    ocean: argv.c ? parseFloat(argv.c) : null, 
     threshold: argv.e ? parseFloat(argv.e) : null,   
     tiny: argv.t === true, 
     value: argv.v ? require(path.resolve(argv.v)) : null   

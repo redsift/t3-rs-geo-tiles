@@ -111,6 +111,8 @@ function computeCoverForTiles_box(png, tiles, radius, lLToXY) {
     const w = (maxx - minx);
     const h = (maxy - miny);
 
+    if (w === 0 || h === 0) return 0.0;
+
     const dst = new PNG({width: w, height: h});
     png.bitblt(dst, minx, miny, w, h, 0, 0);
 
@@ -217,13 +219,16 @@ function createGrid(map, p) {
     let divisions = p.divisions || 35;
     let width = p.width || .45; 
     let tiny = p.tiny != null ? p.tiny : false;
-    let threshold = p.threshold || 0.1;
-    let box = p.box != null ? p.box : true;
-    let ocean = p.ocean != null ? p.ocean : false; //TODO: Expose these options
+    let threshold = p.threshold || 0.1; //TODO: Expose these options
+    let box = p.box != null ? p.box : true; //TODO: Expose these options
+    let ocean = p.ocean || 0.0; 
     let value = createValueFunction(p.value);
 
     const hexasphere = new Hexasphere(radius, divisions, width);
-
+    let oceansphere = null;
+    if (ocean > 0.0) {
+        oceansphere = new Hexasphere(radius, divisions, ocean);
+    }
     const o = { src: map, tiles: [] };
 
     return value.then((valueFn) => {
@@ -244,24 +249,32 @@ function createGrid(map, p) {
                     let size = box ? computeCoverForTiles_box(this, hexasphere.tiles[i], radius, lLToXY) : computeCoverForTiles_sample(this, hexasphere.tiles[i], radius, lLToXY);
 
                     // threshold < 0 is basically a ignore value
-                    if (size > threshold || threshold < 0 || (size === 0.0 && ocean)) {
+                    if (size > threshold || threshold < 0 || (size === 0.0 && oceansphere)) {
                         let tile = {lat: rnd(latLon.lat), lon: rnd(latLon.lon), b: [] };
-                        if (size === 0.0 && ocean) {
+                        if (size === 0.0 && oceansphere) {
                             // Mark these out
-                            tile.a = true;
+                            tile.a = 1;
                             size = 1.0;
+
+                            for (let j = 0; j< oceansphere.tiles[i].boundary.length; j++) {
+                                let newPoint = oceansphere.tiles[i].boundary[j].segment(oceansphere.tiles[i].centerPoint, size);
+                                tile.b.push({
+                                    x: rnd(newPoint.x),
+                                    y: rnd(newPoint.y),
+                                    z: rnd(newPoint.z)
+                                });
+                            }
                         } else if (valueFn != null) {
                             tile.v = valueFn(hexasphere.tiles[i], radius);
-                        }
-                        let scale = size - Math.random() * .25;
 
-                        for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++) {
-                            let newPoint = hexasphere.tiles[i].boundary[j].segment(hexasphere.tiles[i].centerPoint, size);
-                            tile.b.push({
-                                x: rnd(newPoint.x),
-                                y: rnd(newPoint.y),
-                                z: rnd(newPoint.z)
-                            });
+                            for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++) {
+                                let newPoint = hexasphere.tiles[i].boundary[j].segment(hexasphere.tiles[i].centerPoint, size);
+                                tile.b.push({
+                                    x: rnd(newPoint.x),
+                                    y: rnd(newPoint.y),
+                                    z: rnd(newPoint.z)
+                                });
+                            }
                         }
 
                         o.tiles.push(tiny ? compress(tile) : tile);
