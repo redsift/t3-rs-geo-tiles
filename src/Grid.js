@@ -50,8 +50,10 @@ function rnd(num) {
 }
 
 // use a smaller representation of the tiles
+// object to array [ v, a, lat, log, b... ]
 function compress(t) {
-    return t;
+    return t.b.reduce((p, c) => p.concat([ c.x, c.y, c.z ]), 
+                        [ t.v ? t.v : 0.0, t.a ? 1.0 : 0.0, t.lat, t.lon ]);
 }
 
 // original coverage implementation, samples points at the location of the hex grid
@@ -229,7 +231,7 @@ function createGrid(map, p) {
     if (ocean > 0.0) {
         oceansphere = new Hexasphere(radius, divisions, ocean);
     }
-    const o = { src: map, tiles: [] };
+    const o = { src: map, tiny: tiny, tiles: [] };
 
     return value.then((valueFn) => {
         return new Promise((ok) => {
@@ -265,7 +267,7 @@ function createGrid(map, p) {
                                 });
                             }
                         } else if (valueFn != null) {
-                            tile.v = valueFn(hexasphere.tiles[i], radius);
+                            tile.v = rnd(valueFn(hexasphere.tiles[i], radius));
 
                             for (let j = 0; j< hexasphere.tiles[i].boundary.length; j++) {
                                 let newPoint = hexasphere.tiles[i].boundary[j].segment(hexasphere.tiles[i].centerPoint, size);
