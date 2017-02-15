@@ -13,6 +13,12 @@ $ npm install d3-rs-globe-tiles -g
 $ buildgrid -o tiles/grid.js resources/equirectangle_projection.png
 ```
 
+## Mapping Data
+
+Data values can be mapped into the hex bins. Data is defined by assembling a descriptor JSON file that maps the method of extracting the data from a PNG.
+
+The most complex operation is normalization of the projection. The canonocal PNG layout for the projections can be viewed in the d3 repository. https://github.com/d3/d3-geo-projection/tree/master/img
+
 ## Attribution
 
 This software is substantially based on encom-globe by Robert Scanlon, licensed under MIT.

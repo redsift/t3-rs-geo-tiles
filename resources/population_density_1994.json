@@ -1,6 +1,7 @@
 {
     "projection": "geoMiller",
     "url": "https://upload.wikimedia.org/wikipedia/commons/6/67/World_population_density_1994.png",
+    "debug": "_debug.png",
     "crop": {
         "x1": 90,
         "y1": 89,
@@ -8,8 +9,8 @@
         "y2": 3888
     },
     "offset": {
-        "y": 290,
-        "height": 4747
+        "y": 245,
+        "height": 4777
     },
     "scale": [
         { 

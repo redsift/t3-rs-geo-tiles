@@ -7,7 +7,7 @@
     "buildgrid": "bin/buildgrid"
   },
   "scripts": {
-    "build": "mkdir -p tiles && bin/buildgrid -r 500 -o tiles/grid.js resources/equirectangle_projection.png",
+    "build": "mkdir -p tiles && bin/buildgrid -r 500 -w 0.9 -t -o ../encom-globe/tiles/grid.js -v resources/population_density_1994.json resources/equirectangle_projection.png",
     "pretest": "npm outdated || true && npm run build",
     "test": "tape 'test/**/*-test.js'",
     "posttest": "eslint index.js src",

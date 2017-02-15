@@ -4,6 +4,9 @@ const PNG = require('pngjs').PNG,
     fs = require('fs'),
     Hexasphere = require('hexasphere.js'),
     url = require('url'),
+    crypto = require('crypto'),
+    os = require('os'),
+    path = require('path'),
     d3Geo = require('d3-geo'),
     d3GeoProjection = require('d3-geo-projection');
 
@@ -140,15 +143,26 @@ function mapColor(c, scale) {
 function createValueFunction(value) {
     if (value == null) return Promise.resolve(null);
 
-    let dfile = '_debug.png'; // TEMP
-
+   
     return new Promise((ok, ko) => {
-        const protocol = url.parse(value.url).protocol === 'https:' ? require('https') : require('http');
-        protocol.get(value.url, function(response) {
+        const hash = crypto.createHash('sha256').update(value.url).digest('hex');
+        const tmpfile = path.join(os.tmpdir(), hash);
+        let cached = false;
+        try {
+            cached = (fs.accessSync(tmpfile, fs.F_OK | fs.R_OK) == null);
+        }
+        catch(e) {
+            // ignore
+        }
+        const stream = function(response) {
             response.pipe(new PNG({
                     filterType: 4
             }))
             .on('parsed', function() {
+                if (!cached) {
+                    fs.writeFileSync(tmpfile, PNG.sync.write(this));
+                }
+
                 this.adjustGamma();
 
                 const w = value.offset.width ? value.offset.width : value.crop.x2 - value.crop.x1;
@@ -165,6 +179,8 @@ function createValueFunction(value) {
                     remapped.data[i+3] = 255;
                 }
 
+                // write a debug file if required
+                const dfile = value.debug; 
                 if (dfile) {
                     remapped.pack()
                         .pipe(fs.createWriteStream(dfile))
@@ -183,9 +199,14 @@ function createValueFunction(value) {
                 ok(fn);        
             })
             .on('error', e => ko(`Could not parse PNG ${value.url}. ${e}`));
-        });
+        }
 
-        
+        if (cached) {
+            stream(fs.createReadStream(tmpfile));
+        } else {
+            const protocol = url.parse(value.url).protocol === 'https:' ? require('https') : require('http');
+            protocol.get(value.url, stream);
+        }
     });
 }
 
