@@ -18,13 +18,15 @@
     "url": "https://github.com/redsift/d3-rs-globe-tiles.git"
   },
   "engines": {
-      "node": ">= 6.0.0"
-  },  
+    "node": ">= 6.0.0"
+  },
   "author": "rahul@redsift.io",
   "license": "MIT",
   "dependencies": {
-    "minimist": "*",
+    "d3-geo": "^1.4.1",
+    "d3-geo-projection": "^1.2.1",
     "hexasphere.js": "*",
+    "minimist": "*",
     "pngjs": "~3.0.0"
   },
   "devDependencies": {

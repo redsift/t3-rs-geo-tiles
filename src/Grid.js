@@ -3,14 +3,39 @@
 const PNG = require('pngjs').PNG,
     fs = require('fs'),
     Hexasphere = require('hexasphere.js'),
-    url = require('url');
+    url = require('url'),
+    d3Geo = require('d3-geo'),
+    d3GeoProjection = require('d3-geo-projection');
 
-function latLonToXY(width, height, lat, lon) {
+function latLonToXY(width, height, pj) {
+    pj = pj || 'geoEquirectangular';
 
-    const x = Math.floor(width/2.0 + (width/360.0)*lon);
-    const y = Math.floor((height/2.0 + (height/180.0)*lat));
+    let pjFn = d3GeoProjection[pj];
+    if (pjFn == null) {
+        pjFn = d3Geo[pj];
+    }
+    if (pjFn == null) {
+        throw new Error(`Unknown projection "${pj}", please check https://github.com/d3/d3-geo-projection for supported list`);
+    }
+    const projection = pjFn().fitSize([ width, height ], { type: "Sphere" });
 
-    return {x: x, y: y};
+    return function _latLonToXY(lat, lon) {
+        const d = projection([lon, -lat]);
+
+        /*
+        //NOTE: Previous impl
+        const x = Math.floor(width/2.0 + (width/360.0)*lon);
+        const y = Math.floor((height/2.0 + (height/180.0)*lat));
+
+        let dt = Math.abs(x - Math.floor(d[0])) + Math.abs(y - Math.floor(d[1]));
+        if (dt > 1) {
+            console.log(d, x, y);
+        }
+        */
+
+        // TODO: Floor vs round?
+        return { x: Math.floor(d[0]), y: Math.floor(d[1]) };
+    }
 }
 
 function xyToIdx(x, y, width) {
@@ -27,17 +52,17 @@ function compress(t) {
 }
 
 // original coverage implementation, samples points at the location of the hex grid
-function computeCoverForTiles_sample(png, tiles, radius) {
+function computeCoverForTiles_sample(png, tiles, radius, lLToXY) {
     let count = 0;
     for (let j = 0; j< tiles.boundary.length; j++) {
         let latLon = tiles.getLatLon(radius, j);
-        let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+        let xy = lLToXY(latLon.lat, latLon.lon);
         let idx = xyToIdx(xy.x, xy.y, png.width);
         count += 255 - png.data[idx];
     }
 
     let latLon = tiles.getLatLon(radius); // sample center point
-    let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+    let xy = lLToXY(latLon.lat, latLon.lon);
     let idx = xyToIdx(xy.x, xy.y, png.width);
     count += 255 - png.data[idx];
     
@@ -45,7 +70,7 @@ function computeCoverForTiles_sample(png, tiles, radius) {
 }
 
 // new implementation, count the pixels in the bounding box
-function computeCoverForTiles_box(png, tiles, radius) {
+function computeCoverForTiles_box(png, tiles, radius, lLToXY) {
     let minx = png.width + 1,
         miny = png.height + 1,
         maxx = 0,
@@ -53,7 +78,7 @@ function computeCoverForTiles_box(png, tiles, radius) {
         
     for (let j = 0; j < tiles.boundary.length; j++) {
         let latLon = tiles.getLatLon(radius, j);
-        let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+        let xy = lLToXY(latLon.lat, latLon.lon);
 
         if (xy.x < minx) minx = xy.x;
         if (xy.y < miny) miny = xy.y;
@@ -70,7 +95,7 @@ function computeCoverForTiles_box(png, tiles, radius) {
 
         for (let j = 0; j < tiles.boundary.length; j++) {
             let latLon = tiles.getLatLon(radius, j);
-            let xy = latLonToXY(png.width, png.height, latLon.lat, latLon.lon);
+            let xy = lLToXY(latLon.lat, latLon.lon);
 
             if (xy.x > png.width / 2) {
                 continue;
@@ -82,7 +107,7 @@ function computeCoverForTiles_box(png, tiles, radius) {
 
     const w = (maxx - minx);
     const h = (maxy - miny);
-    
+
     const dst = new PNG({width: w, height: h});
     png.bitblt(dst, minx, miny, w, h, 0, 0);
 
@@ -126,11 +151,11 @@ function createValueFunction(value) {
             .on('parsed', function() {
                 this.adjustGamma();
 
-                const w = value.crop.x2 - value.crop.x1;
-                const h = value.crop.y2 - value.crop.y1;
+                const w = value.offset.width ? value.offset.width : value.crop.x2 - value.crop.x1;
+                const h = value.offset.height ? value.offset.height : value.crop.y2 - value.crop.y1;
 
                 const remapped = new PNG({ width: w, height: h, colorType: 2 });
-                this.bitblt(remapped, value.crop.x1, value.crop.y1, w, h, 0, 0);
+                this.bitblt(remapped, value.crop.x1, value.crop.y1, value.crop.x2 - value.crop.x1, value.crop.y2 - value.crop.y1, value.offset.x ? value.offset.x : 0, value.offset.y ? value.offset.y : 0);
 
                 for (let i = 0; i < remapped.data.length; i += 4) {
                     const v = mapColor([ remapped.data[i], remapped.data[i+1], remapped.data[i+2] ], value.scale) * 255;
@@ -148,9 +173,12 @@ function createValueFunction(value) {
                         });
                 }
 
+                const lLToXY = latLonToXY(remapped.width, remapped.height, value.projection);
                 const fn = (tiles, radius) => {
-                    return computeCoverForTiles_box(remapped, tiles, radius);
+                    return computeCoverForTiles_box(remapped, tiles, radius, lLToXY);
                 };
+
+                /* Super debug */
 
                 ok(fn);        
             })
@@ -162,6 +190,7 @@ function createValueFunction(value) {
 }
 
 function createGrid(map, p) {
+
     p = p || {};
     let radius = p.radius || 500;
     let divisions = p.divisions || 35;
@@ -187,11 +216,11 @@ function createGrid(map, p) {
                 filterType: 4
             }))
             .on('parsed', function() {
-                
+                const lLToXY = latLonToXY(this.width, this.height);
 
                 for (let i = 0; i< hexasphere.tiles.length; i++) {
                     let latLon = hexasphere.tiles[i].getLatLon(radius);
-                    let size = box ? computeCoverForTiles_box(this, hexasphere.tiles[i], radius) : computeCoverForTiles_sample(this, hexasphere.tiles[i], radius);
+                    let size = box ? computeCoverForTiles_box(this, hexasphere.tiles[i], radius, lLToXY) : computeCoverForTiles_sample(this, hexasphere.tiles[i], radius, lLToXY);
 
                     // threshold < 0 is basically a ignore value
                     if (size > threshold || threshold < 0 || (size === 0.0 && ocean)) {
@@ -202,7 +231,6 @@ function createGrid(map, p) {
                             size = 1.0;
                         } else if (valueFn != null) {
                             tile.v = valueFn(hexasphere.tiles[i], radius);
-                            console.log(tile.v);
                         }
                         let scale = size - Math.random() * .25;
 
