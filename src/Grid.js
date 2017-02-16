@@ -144,6 +144,12 @@ function mapColor(c, scale) {
     return 0;
 }
 
+function gammaClamp(v, g) {
+    const vg = Math.pow(v, 1/g);
+
+    return Math.min(vg * 255.0, 255.0);
+}
+
 function createValueFunction(value) {
     if (value == null) return Promise.resolve(null);
 
@@ -169,6 +175,7 @@ function createValueFunction(value) {
 
                 this.adjustGamma();
 
+                const g = value.gamma || 1.0;
                 const w = value.offset.width ? value.offset.width : value.crop.x2 - value.crop.x1;
                 const h = value.offset.height ? value.offset.height : value.crop.y2 - value.crop.y1;
 
@@ -176,7 +183,7 @@ function createValueFunction(value) {
                 this.bitblt(remapped, value.crop.x1, value.crop.y1, value.crop.x2 - value.crop.x1, value.crop.y2 - value.crop.y1, value.offset.x ? value.offset.x : 0, value.offset.y ? value.offset.y : 0);
 
                 for (let i = 0; i < remapped.data.length; i += 4) {
-                    const v = mapColor([ remapped.data[i], remapped.data[i+1], remapped.data[i+2] ], value.scale) * 255;
+                    const v = gammaClamp(mapColor([ remapped.data[i], remapped.data[i+1], remapped.data[i+2] ], value.scale), g);
                     remapped.data[i] = v;
                     remapped.data[i+1] = v;
                     remapped.data[i+2] = v;

@@ -12,6 +12,7 @@
         "y": 245,
         "height": 4777
     },
+    "gamma": 2.2,
     "scale": [
         { 
             "value": 0.0,
