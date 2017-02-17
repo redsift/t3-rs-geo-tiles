@@ -31,6 +31,7 @@
     "pngjs": "~3.0.0"
   },
   "devDependencies": {
-    "tape": "*"
+    "tape": "*",
+    "eslint": "^3.3.1"
   }
 }
