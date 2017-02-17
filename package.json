@@ -1,7 +1,7 @@
 {
-  "name": "d3-rs-globe-tiles",
-  "version": "0.0.1",
-  "description": "Tile generator for d3-rs-globe",
+  "name": "t3-rs-globe-tiles",
+  "version": "0.0.2",
+  "description": "Tile generator for t3-rs-globe",
   "main": "src/Grid.js",
   "bin": {
     "buildgrid": "bin/buildgrid"
@@ -15,12 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/redsift/d3-rs-globe-tiles.git"
+    "url": "https://github.com/redsift/t3-rs-globe-tiles.git"
   },
   "engines": {
     "node": ">= 6.0.0"
   },
-  "author": "rahul@redsift.io",
+  "author": {
+    "name": "Rahul Powar",
+    "url": "https://medium.com/@rahulpowar"
+  },
   "license": "MIT",
   "dependencies": {
     "d3-geo": "^1.4.1",

@@ -3,7 +3,7 @@ machine:
   node:
     version: 6.3.1
   environment:
-    NAME: d3-rs-globe-tiles
+    NAME: t3-rs-globe-tiles
 
 checkout:
   pre:
