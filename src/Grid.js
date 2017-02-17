@@ -140,7 +140,7 @@ function mapColor(c, scale) {
         }
     }
 
-    console.log('Unknown color', c);
+    console.log('Unknown color', c); // eslint-disable-line no-console
     return 0;
 }
 
@@ -196,7 +196,7 @@ function createValueFunction(value) {
                     remapped.pack()
                         .pipe(fs.createWriteStream(dfile))
                         .on('finish', function() {
-                            console.log(`debug PNG file ${dfile} written`);
+                            console.log(`debug PNG file ${dfile} written`); // eslint-disable-line no-console
                         });
                 }
 

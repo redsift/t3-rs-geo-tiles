@@ -7,11 +7,9 @@
     "buildgrid": "bin/buildgrid"
   },
   "scripts": {
-    "build": "mkdir -p tiles && bin/buildgrid -t -d 60 -r 500 -w 0.9 -c 0.55 -o ./tiles/grid.js -v resources/population_density_1994.json resources/equirectangle_projection.png",
-    "pretest": "npm outdated || true && npm run build",
-    "test": "tape 'test/**/*-test.js'",
-    "posttest": "eslint index.js src",
-    "prepublish": "npm run build"
+    "pretest": "npm outdated || true",
+    "test": "mkdir -p tiles && bin/buildgrid -t -d 10 -r 500 -w 0.9 -c 0.55 -o ./tiles/grid.js -v resources/population_density_1994.json resources/equirectangle_projection.png",
+    "posttest": "eslint index.js src"
   },
   "repository": {
     "type": "git",
