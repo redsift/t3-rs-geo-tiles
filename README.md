@@ -1,15 +1,15 @@
-# t3-rs-globe-tiles
+# t3-rs-geo-tiles
 
-[![Circle CI](https://img.shields.io/circleci/project/redsift/t3-rs-globe-tiles.svg?style=flat-square)](https://circleci.com/gh/redsift/t3-rs-globe-tiles)
-[![npm](https://img.shields.io/npm/v/@redsift/t3-rs-globe-tiles.svg?style=flat-square)](https://www.npmjs.com/package/@redsift/t3-rs-globe-tiles)
-[![MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/redsift/t3-rs-globe-tiles/master/LICENSE)
+[![Circle CI](https://img.shields.io/circleci/project/redsift/t3-rs-geo-tiles.svg?style=flat-square)](https://circleci.com/gh/redsift/t3-rs-geo-tiles)
+[![npm](https://img.shields.io/npm/v/@redsift/t3-rs-geo-tiles.svg?style=flat-square)](https://www.npmjs.com/package/@redsift/t3-rs-geo-tiles)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/redsift/t3-rs-geo-tiles/master/LICENSE)
 
-`t3-rs-globe-tiles` is a command line tool to create hex tiles from a PNG map.
+`t3-rs-geo-tiles` is a command line tool to create hex tiles from a PNG map. Primarily used to generate tiles for [t3-rs-geo](https://github.com/redsift/t3-rs-geo)
 
 ## Usage
 
 ```bash
-$ npm install t3-rs-globe-tiles -g
+$ npm install t3-rs-geo-tiles -g
 $ buildgrid -o tiles/grid.js resources/equirectangle_projection.png
 ```
 

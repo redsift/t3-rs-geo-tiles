@@ -1,5 +1,5 @@
 {
-  "name": "t3-rs-globe-tiles",
+  "name": "t3-rs-geo-tiles",
   "version": "0.0.2",
   "description": "Tile generator for t3-rs-globe",
   "main": "src/Grid.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/redsift/t3-rs-globe-tiles.git"
+    "url": "https://github.com/redsift/t3-rs-geo-tiles.git"
   },
   "engines": {
     "node": ">= 6.0.0"
